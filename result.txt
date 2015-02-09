@@ -1,0 +1,4 @@
+10 - best-practices-and-normalization link:http://v.youku.com/v_show/id_XODg5NjQxNzQw.html
+14 - sql-fundamentals link:http://v.youku.com/v_show/id_XODg5NjQwODY4.html
+16 - insert-update-and-delete-statements link:http://v.youku.com/v_show/id_XODg5NjQyMjc2.html
+17 - table-joins link:http://v.youku.com/v_show/id_XODg5NjQyNTEy.html
