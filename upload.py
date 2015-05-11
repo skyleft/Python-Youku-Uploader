@@ -7,19 +7,23 @@ import re
 from threading import Thread,Lock
 from youku import YoukuUpload
 from youku.util import YoukuError
+from requests.exceptions import ConnectionError,RequestException
 import indicator
 
 youku = None
 bar = -1
 mutex = Lock()
 isDone = False
+isError = False
 
 #process indicator
 def show_process(no):
 
-    global youku,bar,isDone
+    global youku,bar,isDone,isError
 
     while True:
+        if isError:
+            return
         mutex.acquire()
         if isDone:
             indicator.update(100)
@@ -32,20 +36,31 @@ def show_process(no):
             bar = youku.transferred
 
 def upload_main(file_info):
-    global already,failed,youku,mutex,isDone
+    global already,failed,youku,mutex,isDone,isError
     mutex.acquire()
     isDone = False
+    isError = False
     mutex.release()
-    video_id = youku.upload(file_info)
-    mutex.acquire()
-    isDone = True
-    mutex.release()
-    if video_id:
-        result_log.write("%s link:http://v.youku.com/v_show/id_%s.html\n" % (f['title'],video_id))
-        already = already + 1
-    else:
+    try:
+        video_id = youku.upload(file_info)
+        mutex.acquire()
+        isError = False
+        isDone = True
+        mutex.release()
+        if video_id:
+            result_log.write("%s link:http://v.youku.com/v_show/id_%s.html\n" % (f['title'],video_id))
+            already = already + 1
+        else:
+            failed_log.write('video:%s faild!!!!!!!!!!\n' % (f['title']))
+            failed = failed + 1
+    except Exception,e:
+        mutex.acquire()
+        isError = True
+        mutex.release()
+        print 'Ops,there maybe something wrong with the network.'
         failed_log.write('video:%s faild!!!!!!!!!!\n' % (f['title']))
         failed = failed + 1
+
 
 
 available_format = (
@@ -116,5 +131,6 @@ for f in ready_for_upload_list:
     t2.join()
     t1.join()
 
-    print "\n%d videos have been processed, %d are finished, %d are failed, %d left." % (already+failed,already,failed,total-already-failed)
+    #print "\n%d videos have been processed, %d are finished, %d are failed, %d left." % (already+failed,already,failed,total-already-failed)
     print 'go to next'
+print "\n%d videos have been processed, %d are finished, %d are failed, %d left." % (already+failed,already,failed,total-already-failed)
